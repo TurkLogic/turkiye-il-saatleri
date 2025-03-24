@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkiye İl Saatleri</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .gmt-time {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #2c3e50;
+        }
+        .city-selector {
+            margin: 30px 0;
+        }
+        select, button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            min-height: 50px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        .city-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        .city-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        @media (max-width: 768px) {
+            .city-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Türkiye İl Saatleri</h1>
+        <p>İstanbul'da saat 12:00 iken diğer illerde saat kaç olur?</p>
+        
+        <div class="gmt-time" id="turkey-time">12:00:00</div>
+        
+        <div class="city-selector">
+            <select id="city-select">
+                <option value="">Bir şehir seçin</option>
+                <!-- Şehirler JS'den eklenecek -->
+            </select>
+            <button onclick="showCityTime()">Göster</button>
+        </div>
+        
+        <div class="result" id="result"></div>
+        
+        <h2>Tüm Şehirler</h2>
+        <div class="city-list" id="city-list"></div>
+    </div>
+
+    <script>
+        // Şehir verileri
+        const cityTimes = {
+            "Adana": "12:25", "Adıyaman": "12:37", "Afyon": "12:06",
+            "Ağrı": "12:56", "Aksaray": "12:20", "Amasya": "12:28",
+            "Ankara": "12:16", "Antalya": "12:07", "Ardahan": "12:55",
+            "Artvin": "12:51", "Aydın": "11:56", "Balıkesir": "11:56",
+            "Bartın": "12:14", "Batman": "12:49", "Bayburt": "12:45",
+            "Bilecik": "12:04", "Bingöl": "12:46", "Bitlis": "12:53",
+            "Bolu": "12:11", "Burdur": "12:05", "Bursa": "12:00",
+            "Çanakkale": "11:50", "Çankırı": "12:19", "Çorum": "12:24",
+            "Denizli": "12:01", "Diyarbakır": "12:45", "Düzce": "12:09",
+            "Edirne": "11:50", "Elazığ": "12:41", "Erzincan": "12:42",
+            "Erzurum": "12:49", "Eskişehir": "12:06", "Gaziantep": "12:34",
+            "Giresun": "12:38", "Gümüşhane": "12:42", "Hakkari": "12:59",
+            "Hatay": "12:29", "Iğdır": "12:47", "Isparta": "12:06",
+            "İçel (Mersin)": "12:23", "İstanbul": "12:00", "İzmir": "11:53",
+            "Kahramanmaraş": "12:32", "Karabük": "12:19", "Karaman": "12:17",
+            "Kars": "12:56", "Kastamonu": "12:19", "Kayseri": "12:26",
+            "Kırıkkale": "12:18", "Kırklareli": "11:53", "Kırşehir": "12:21",
+            "Kilis": "12:32", "Kocaeli": "12:04", "Konya": "12:14",
+            "Kütahya": "12:04", "Malatya": "12:37", "Manisa": "11:54",
+            "Mardin": "12:47", "Muğla": "11:58", "Muş": "12:50",
+            "Nevşehir": "12:23", "Niğde": "12:23", "Ordu": "12:36",
+            "Osmaniye": "12:29", "Rize": "12:46", "Sakarya": "12:06",
+            "Samsun": "12:29", "Siirt": "12:52", "Sinop": "12:25",
+            "Sivas": "12:32", "Şanlıurfa": "12:39", "Şırnak": "12:54",
+            "Tekirdağ": "11:54", "Tokat": "12:30", "Trabzon": "12:43",
+            "Tunceli": "12:42", "Uşak": "12:02", "Van": "12:58",
+            "Yalova": "12:01", "Yozgat": "12:23", "Zonguldak": "12:11"
+        };
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // Şehir seçim dropdown'ını doldur
+            const citySelect = document.getElementById('city-select');
+            for (const city in cityTimes) {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            }
+
+            // Tüm şehirleri listele
+            const cityList = document.getElementById('city-list');
+            for (const city in cityTimes) {
+                const cityItem = document.createElement('div');
+                cityItem.className = 'city-item';
+                cityItem.innerHTML = `<strong>${city}</strong>: ${cityTimes[city]}`;
+                cityList.appendChild(cityItem);
+            }
+
+            // Gerçek zamanlı saat güncelleme
+            updateTurkeyTime();
+            setInterval(updateTurkeyTime, 1000);
+        });
+
+        // Türkiye saatini güncelle
+        function updateTurkeyTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('turkey-time').textContent = timeString;
+        }
+
+        // Seçilen şehrin saatini göster
+        function showCityTime() {
+            const citySelect = document.getElementById('city-select');
+            const selectedCity = citySelect.value;
+            const resultDiv = document.getElementById('result');
+
+            if (!selectedCity) {
+                resultDiv.textContent = "Lütfen bir şehir seçin!";
+                resultDiv.style.display = 'block';
+                resultDiv.style.backgroundColor = '#ffecec';
+                return;
+            }
+
+            const cityTime = cityTimes[selectedCity];
+            const now = new Date();
+            const [hours, minutes] = cityTime.split(':');
+            
+            // İstanbul saati 12:00 kabul ederek farkı hesapla
+            const istanbulHours = 12;
+            const istanbulMinutes = 0;
+            
+            const diffHours = parseInt(hours) - istanbulHours;
+            const diffMinutes = parseInt(minutes) - istanbulMinutes;
+            
+            // Şu anki saate farkı ekle
+            now.setHours(now.getHours() + diffHours);
+            now.setMinutes(now.getMinutes() + diffMinutes);
+            
+            const localTimeString = now.toLocaleTimeString('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            resultDiv.innerHTML = `
+                <strong>${selectedCity}</strong> şehrinde şu an saat: <br>
+                <span style="font-size: 1.8em; color: #e74c3c;">${localTimeString}</span>
+                <div style="font-size: 0.8em; margin-top: 10px;">
+                    (İstanbul 12:00 iken: ${cityTime})
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+            resultDiv.style.backgroundColor = '#e8f5e9';
+        }
+    </script>
+</body>
+</html>
